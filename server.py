@@ -56,6 +56,7 @@ def init_server():
     while sock:
         # accept connection from a client
         conn, addr = sock.accept()
+        addr = addr[0]
         conn.settimeout(TIMEOUT)
         print('Connection from host on IP={}'.format(addr))
 
