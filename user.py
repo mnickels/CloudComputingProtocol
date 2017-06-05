@@ -2,6 +2,7 @@
 
 import socket
 from operators import *
+from errors import *
 import packet
 
 TCP_IP = '127.0.0.1'
@@ -30,5 +31,20 @@ s.connect((TCP_IP, TCP_PORT))
 dcp = packet.DCPacket(op, opr1, opr2)
 s.send(dcp.pack())
 # End Data Compute Packet
+
+ans = s.recv(20)
+rcp = packet.RCPacket.unpack(ans)
+result = rcp.get_result()
+error = rcp.get_error()
+print(error)
+
+if error == NO:
+    print("Answer =", result)
+elif error == ZERO:
+    print("Divided by zero error")
+elif error == OTHER:
+    print("Unknown error occurred")
+
+
 
 s.close()

@@ -4,6 +4,7 @@ import socket
 import threading
 import packet
 from operators import *
+from errors import *
 
 TCP_IP = '127.0.0.1'
 TCP_PORT = 5005
@@ -36,6 +37,28 @@ class ServerThread(threading.Thread):
         self.report('operator:{}, operand1:{}, operand2:{}'
                     .format(op, oprnds[0], oprnds[1]))
         # End Data Compute Packet
+
+        error = NO
+        ans = 0.0
+
+        if op == ADD:
+            ans = oprnds[0] + oprnds[1]
+        elif op == SUB:
+            ans = oprnds[0] - oprnds[1]
+        elif op == MUL:
+            ans = oprnds[0] * oprnds[1]
+        elif op == DIV:
+            if oprnds[1] == 0:
+                #error
+                error = ZERO
+            else:
+                ans = oprnds[0] / oprnds[1]
+        else:
+            # error
+            error = OTHER
+
+        rcp = packet.RCPacket(error, ans)
+        self.conn.send(rcp.pack())
 
     def get_id(self):
         return self.id
