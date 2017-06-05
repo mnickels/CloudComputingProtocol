@@ -1,7 +1,9 @@
 #!/usr/bin/env python
+
 import socket
-import struct
 import threading
+import packet
+from operators import *
 
 TCP_IP = '127.0.0.1'
 TCP_PORT = 5005
@@ -14,7 +16,7 @@ THREAD_ID = 1
 class ServerThread(threading.Thread):
 
     def __init__(self, conn, addr):
-        threading.Thread.__init__(self)
+        super(ServerThread, self).__init__()
         global THREAD_ID
         self.id = THREAD_ID
         self.conn = conn
@@ -23,12 +25,17 @@ class ServerThread(threading.Thread):
 
     # Handle comms b/t a client and the server
     def run(self):
+        # Data Compute Packet
         data = self.conn.recv(BUFFER_SIZE)
         if not data:
             self.report('error receiving data from client, closing thread')
             return
-        self.report('received data:{}'.format(data))
-        self.conn.send(data)
+        dcp = packet.DCPacket.unpack(data)
+        op = dcp.get_operator()
+        oprnds = dcp.get_operands()
+        self.report('operator:{}, operand1:{}, operand2:{}'
+                    .format(op, oprnds[0], oprnds[1]))
+        # End Data Compute Packet
 
     def get_id(self):
         return self.id
