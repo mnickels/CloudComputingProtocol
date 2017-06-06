@@ -5,6 +5,7 @@ from errors import *
 
 DCP_FORMAT = '>cdd'
 RCP_FORMAT = '>cd'
+REQUEST_FORMAT ='>c'
 
 class Packet(object):
     
@@ -64,7 +65,31 @@ class RCPacket(Packet):
         print(byte_string)
         data = struct.unpack(RCP_FORMAT, byte_string)
         return RCPacket(data[0], data[1])
- 
+        
+class RequestPacket(Packet):
     
-    
+    def __init__(self, operator):
+        super(RequestPacket, self).__init__(REQUEST_FORMAT,operator)
+        self.operator = operator
+        
+    def get_op(self):
+        return self.operator
+        
+    def unpack(byte_string):
+        print(byte_string)
+        data = struct.unpack(REQUEST_FORMAT, byte_string)
+        return RequestPacket(data[0])
+        
+class VerifyComputePacket(Packet):
 
+    def __init__(self, response):
+        super(VerifyComputePacket, self).__init__(REQUEST_FORMAT,response)
+        self.response = response
+    
+    def get_response(self):
+        return self.response
+
+    def unpack(byte_string):
+        print(byte_string)
+        data = struct.unpack(REQUEST_FORMAT, byte_string)
+        return VerifyComputePacket(data[0])

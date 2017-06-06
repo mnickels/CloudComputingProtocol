@@ -2,6 +2,7 @@
 
 import socket
 import threading
+import random
 import packet
 from operators import *
 from errors import *
@@ -26,39 +27,60 @@ class ServerThread(threading.Thread):
 
     # Handle comms b/t a client and the server
     def run(self):
-        # Data Compute Packet
-        data = self.conn.recv(BUFFER_SIZE)
-        if not data:
+        #Request compute packet
+        reqData = self.conn.recv(BUFFER_SIZE)
+        if not reqData:
             self.report('error receiving data from client, closing thread')
             return
-        dcp = packet.DCPacket.unpack(data)
-        op = dcp.get_operator()
-        oprnds = dcp.get_operands()
-        self.report('operator:{}, operand1:{}, operand2:{}'
-                    .format(op, oprnds[0], oprnds[1]))
-        # End Data Compute Packet
-
-        error = NO
-        ans = 0.0
-
-        if op == ADD:
-            ans = oprnds[0] + oprnds[1]
-        elif op == SUB:
-            ans = oprnds[0] - oprnds[1]
-        elif op == MUL:
-            ans = oprnds[0] * oprnds[1]
-        elif op == DIV:
-            if oprnds[1] == 0:
-                #error
-                error = ZERO
-            else:
-                ans = oprnds[0] / oprnds[1]
+        #print('got request packet')
+        rp = packet.RequestPacket.unpack(reqData)
+        reqOp = rp.get_op()
+        chance = random.randint(0,99)
+        if chance <89:
+            ver = YES
+            #print('can compute')
         else:
-            # error
-            error = OTHER
+            ver = NO
+            #print('Can not compute')
+        #print('Sending vcp packet')
+        vcp = packet.VerifyComputePacket(ver)
+        self.conn.send(vcp.pack())
+        
+        #End Request compute
+        if ver==YES:
+            # Data Compute Packet
+            data = self.conn.recv(BUFFER_SIZE)
+            if not data:
+                self.report('error receiving data from client, closing thread')
+                return
+            dcp = packet.DCPacket.unpack(data)
+            op = dcp.get_operator()
+            oprnds = dcp.get_operands()
+            self.report('operator:{}, operand1:{}, operand2:{}'
+                        .format(op, oprnds[0], oprnds[1]))
+            # End Data Compute Packet
 
-        rcp = packet.RCPacket(error, ans)
-        self.conn.send(rcp.pack())
+            error = NO
+            ans = 0.0
+
+            if op == ADD:
+                ans = oprnds[0] + oprnds[1]
+            elif op == SUB:
+                ans = oprnds[0] - oprnds[1]
+            elif op == MUL:
+                ans = oprnds[0] * oprnds[1]
+            elif op == DIV:
+                if oprnds[1] == 0:
+                    #error
+                    error = ZERO
+                else:
+                    ans = oprnds[0] / oprnds[1]
+            else:
+                # error
+                error = OTHER
+
+            rcp = packet.RCPacket(error, ans)
+            self.conn.send(rcp.pack())
 
     def get_id(self):
         return self.id
